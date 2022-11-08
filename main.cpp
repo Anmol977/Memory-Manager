@@ -23,21 +23,17 @@
 
 int main() {
     char *p = (char *) malloc(MAX_HEAP);
-    char *temp = p;
     unsigned int blocksize = WSIZE + DSIZE + WSIZE;
     unsigned int numBlocks = MAX_HEAP / blocksize;
     std::cout << "numblocks : " << numBlocks << std::endl;
     for (unsigned int i = 0; i < numBlocks; i++) {
-        PUT(temp, ADD_HEADER(DSIZE, 0));
-        PUT(temp + WSIZE, i);
-        PUT(temp + WSIZE + DSIZE, ADD_HEADER(DSIZE, 0));
-        temp += blocksize;
+        PUT(p + (i * blocksize), ADD_HEADER(DSIZE, 0));
+        PUT(p + WSIZE + (i * blocksize), i);
+        PUT(p + WSIZE + DSIZE + (i * blocksize), ADD_HEADER(DSIZE, 0));
     }
-    temp = p;
     for (unsigned int i = 0; i < numBlocks; i++) {
-        std::cout<< GET(temp + WSIZE)<<std::endl;
-        std::cout << GET(temp) << std::endl;
-        temp+=blocksize;
+        std::cout<< GET(p + WSIZE + (i * blocksize))<<std::endl;
+        std::cout << GET(p + (i * blocksize)) << std::endl;
     }
     return 0;
 }
