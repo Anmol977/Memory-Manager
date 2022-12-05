@@ -6,6 +6,7 @@
 #define MEMALLOCATOR_FAST_MALLOC_H
 
 #include <cstdlib>
+#include <algorithm>
 #include "error_strings.h"
 #include "logger.cpp"
 
@@ -15,7 +16,7 @@
 #define CHUNKSIZE (1>>12)
 
 // pack header of a memory block
-#define ADD_HEADER(SIZE, ISALLOC) ((SIZE) | (ISALLOC))
+#define PACK_INFO(SIZE, ISALLOC) ((SIZE) | (ISALLOC))
 
 // to get data of memory block using a pointer
 #define GET(p) (*(unsigned int *)(p))
@@ -23,28 +24,42 @@
 #define PUT(p, val) (*(unsigned int *)(p) = (val))
 
 // self-explanatory, p is a pointer to memory block
-#define GET_HEADER_SIZE(p) (GET(p) & ~0x7)
-#define GET_HEADER_ALLOC(p) (GET(p) & 0x1)
+#define GET_BLOCK_SIZE(p) (GET(p) & ~0x7)
+#define GET_BLOCK_ALLOC(p) (GET(p) & 0x1)
 
 // get pointers to header or footer from block pointer
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
-#define FOOTER_PTR(cp) ((char *)(bp) + GET_SIZE(HDRP(bp)))
+#define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
-#define NEXT_BLK_PTR(bp) ((char *)(bp) + GET_HEADER_SIZE(HEADER_PTR(bp)))
-#define PREV_BLK_PTR(bp) ((char *)(bp) - DSIZE - GET_HEADER_SIZE((char *)(bp) - DSIZE))
+#define NEXT_BLK_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
+#define PREV_BLK_PTR(bp) ((char *)(bp) - DSIZE - GET_BLOCK_SIZE((char *)(bp) - DSIZE))
 
 
 class fast_malloc {
+private:
     char *mem_heap; // ptr to first byte of the heap
     char *mem_brk; // ptr to one beyond last byte of heap
     char *mem_max_addr; // max legal heap address plus 1
     Logger *logger;
+    char *heap_listp;
 
-    fast_malloc();
+    void *fast_coalesce(void *block_ptr);
 
     void *fast_sbrk(int incr_amt);
 
     int init_mem_list();
+
+    void *fast_find_fit(std::size_t size);
+
+    void *extend_heap(std::size_t words);
+
+public:
+
+    fast_malloc();
+
+    void fast_free(void *block_ptr);
+
+    void *mem_malloc(std::size_t size);
 };
 
 

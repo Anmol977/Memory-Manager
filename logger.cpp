@@ -8,7 +8,11 @@
 
 class Logger {
 public :
-    void print_error(const char *msg){
-        std::cout<<RED<<"Error : "<<RESET<<msg<<std::endl;
+    void print_error(const char *msg) {
+        std::cout << RED << "ERROR : " << RESET << msg << std::endl;
+    }
+
+    void print_info(const char *msg) {
+        std::cout << "INFO : " << msg << std::endl;
     }
 };
