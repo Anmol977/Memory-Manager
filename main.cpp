@@ -22,6 +22,7 @@
 #define PREV_BLK_PTR(bp) ((char *)(bp) - DSIZE - GET_HEADER_SIZE((char *)(bp) - DSIZE))
 
 int main() {
+<<<<<<< HEAD
 //    char *p = (char *) malloc(MAX_HEAP);
 //    char *temp = p;
 //    unsigned int blocksize = WSIZE + DSIZE + WSIZE;
@@ -39,5 +40,20 @@ int main() {
 //        std::cout << GET(temp) << std::endl;
 //        temp+=blocksize;
 //    }
+=======
+    char *p = (char *) malloc(MAX_HEAP);
+    unsigned int blocksize = WSIZE + DSIZE + WSIZE;
+    unsigned int numBlocks = MAX_HEAP / blocksize;
+    std::cout << "numblocks : " << numBlocks << std::endl;
+    for (unsigned int i = 0; i < numBlocks; i++) {
+        PUT(p + (i * blocksize), ADD_HEADER(DSIZE, 0));
+        PUT(p + WSIZE + (i * blocksize), i);
+        PUT(p + WSIZE + DSIZE + (i * blocksize), ADD_HEADER(DSIZE, 0));
+    }
+    for (unsigned int i = 0; i < numBlocks; i++) {
+        std::cout<< GET(p + WSIZE + (i * blocksize))<<std::endl;
+        std::cout << GET(p + (i * blocksize)) << std::endl;
+    }
+>>>>>>> d15aa66ecbbcccce4d1e4252277704f65739f082
     return 0;
 }
