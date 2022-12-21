@@ -49,7 +49,7 @@ void *fast_malloc::extend_heap(std::size_t words) {
     PUT(FOOTER_PTR(bp), PACK_INFO(size, 0));
     PUT(HEADER_PTR(NEXT_BLK_PTR(bp)), PACK_INFO(size, 1));
 
-    fast_coalesce(bp);
+    coalesce_block(bp);
     return (void *) 1;
 }
 
@@ -57,10 +57,10 @@ void fast_malloc::fast_free(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
-    fast_coalesce(block_ptr);
+    coalesce_block(block_ptr);
 }
 
-void *fast_malloc::fast_coalesce(void *block_ptr) {
+void *fast_malloc::coalesce_block(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     bool is_prev_free = GET_BLOCK_ALLOC(PREV_BLK_PTR(block_ptr));
     bool is_next_free = GET_BLOCK_ALLOC(NEXT_BLK_PTR(block_ptr));
@@ -116,6 +116,21 @@ void *fast_malloc::mem_malloc(std::size_t size) {
 }
 
 void *fast_malloc::fast_find_fit(std::size_t size) {
-    return (void *) 1;
+    int min_diff = INT16_MAX;
+    char *curr_min_ptr = nullptr;
+    for(char *i = mem_heap;i != mem_max_addr ;i += 2*WSIZE + GET_BLOCK_SIZE(i + WSIZE)){
+        if(GET_BLOCK_SIZE(i + WSIZE) - size < min_diff){
+            min_diff = GET_BLOCK_SIZE(i + WSIZE) - size;
+            curr_min_ptr = i;
+        }
+    }
+    return (void *)curr_min_ptr;
 }
 
+void *fast_malloc::fast_allocate(std::size_t size) {
+    void *mem_ptr = fast_find_fit(size);
+    if(mem_ptr == nullptr){
+        
+    }
+    return mem_ptr;
+}
