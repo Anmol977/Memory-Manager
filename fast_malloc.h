@@ -43,7 +43,7 @@ private:
     Logger *logger;
     char *heap_listp;
 
-    void *fast_coalesce(void *block_ptr);
+    void *coalesce_block(void *block_ptr);
 
     void *fast_sbrk(int incr_amt);
 
@@ -52,6 +52,8 @@ private:
     void *fast_find_fit(std::size_t size);
 
     void *extend_heap(std::size_t words);
+
+    void *fast_allocate(std::size_t size);
 
 public:
 
