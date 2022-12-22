@@ -67,6 +67,8 @@ public:
     void fast_free(void *block_ptr);
 
     void *mem_malloc(std::size_t size);
+
+    void print_block_info(void *block_ptr);
 };
 
 

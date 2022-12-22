@@ -1,5 +1,5 @@
 //
-// Created by anmol and shivam on 3/12/22.
+// Created by anmol and shivam and agrim on 3/12/22.
 //
 
 #include "fast_malloc.h"
@@ -152,4 +152,15 @@ void fast_malloc::allocate_block(std::size_t size, void *block_ptr){
 void *fast_malloc::fast_allocate(std::size_t size) {
     void *mem_ptr = fast_find_fit(size);
     return mem_ptr;
+}
+
+void fast_malloc::print_block_info(void *block_ptr) {
+    std::cout << std::endl << "SIZE:\t\t" << GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) << std::endl;
+    std::cout << "PREV S:\t\t" << GET(FOOTER_PTR(block_ptr)) << std::endl;
+    std::cout << "PREV S:\t\t" << GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr)) << std::endl;
+    std::cout << "PREV:\t\t" << (void *)(PREV_BLK_PTR(block_ptr)) << std::endl;
+    std::cout << "HEADER:\t\t" << (void *)HEADER_PTR(block_ptr) << std::endl;
+    std::cout << "BLOCK:\t\t" << (void *)block_ptr << std::endl;
+    std::cout << "FOOTER:\t\t" << (void *)FOOTER_PTR(block_ptr) << std::endl;
+    std::cout << "NEXT:\t\t" << (void *)(NEXT_BLK_PTR(block_ptr)) << std::endl;
 }
