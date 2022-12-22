@@ -6,6 +6,7 @@
 #define MEMALLOCATOR_FAST_MALLOC_H
 
 #include <cstdlib>
+#include <cmath>
 #include <algorithm>
 #include "error_strings.h"
 #include "logger.cpp"
@@ -31,7 +32,7 @@
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
 #define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
-#define NEXT_BLK_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
+#define NEXT_BLK_PTR(bp) ((char *)(bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) ((char *)(bp) - DSIZE - GET_BLOCK_SIZE((char *)(bp) - DSIZE))
 
 
@@ -43,7 +44,7 @@ private:
     Logger *logger;
     char *heap_listp;
 
-    void *coalesce_block(void *block_ptr);
+
 
     void *fast_sbrk(int incr_amt);
 
@@ -55,7 +56,11 @@ private:
 
     void *fast_allocate(std::size_t size);
 
+    void allocate_block(std::size_t size, void *block_ptr);
 public:
+    void *coalesce_block(void *block_ptr);
+
+    void *fast_coalesce();
 
     fast_malloc();
 
