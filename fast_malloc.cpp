@@ -7,12 +7,48 @@
 fast_malloc::fast_malloc() {
     mem_heap = (char *) malloc(MAX_HEAP);
     mem_brk = (char *) mem_heap;
+    heap_listp = (char *) mem_heap;
     mem_max_addr = (char *) mem_heap + MAX_HEAP;
     logger = new Logger();
     if (init_mem_list() == -1) {
         logger->print_error(error_strings::INITIALIZATION_ERROR);
         exit(-1);
     }
+}
+
+int fast_malloc::init_mem_list() {
+    if ((heap_listp = (char *) fast_sbrk(4 * WSIZE)) == (void *) -1) {
+        return -1;
+    }
+    PUT(heap_listp, 0);
+    PUT(heap_listp + (1 * WSIZE), PACK_INFO(0, 1));
+    PUT(heap_listp + (2 * WSIZE), PACK_INFO(0, 1));
+    if ((heap_listp = (char *)extend_heap(CHUNKSIZE / WSIZE)) == nullptr)
+        return -1;
+    return 0;
+}
+
+void *fast_malloc::extend_heap(std::size_t words) {
+    char *bp;
+    std::size_t size;
+    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
+
+    if ((long) (bp = (char *) fast_sbrk(size)) == -1) {
+        return nullptr;
+    }
+
+    if (size > DSIZE) {
+        PUT(HEADER_PTR(bp), PACK_INFO(size - DSIZE, 0));
+        PUT(FOOTER_PTR(bp), PACK_INFO(size - DSIZE, 0));
+    } else {
+        PUT(HEADER_PTR(bp), PACK_INFO(size, 0));
+        PUT(FOOTER_PTR(bp), PACK_INFO(size, 0));
+    }
+    PUT(HEADER_PTR(NEXT_BLK_PTR(bp)), PACK_INFO(0, 1));
+
+//    ig no need to call coalesce on each extend
+//    coalesce_block(bp);
+    return (void *) bp;
 }
 
 void *fast_malloc::fast_sbrk(int incr_amt) {
@@ -26,54 +62,24 @@ void *fast_malloc::fast_sbrk(int incr_amt) {
     return (void *) prev_brk;
 }
 
-int fast_malloc::init_mem_list() {
-    if ((heap_listp = (char *) fast_sbrk(4 * WSIZE)) == (void *) -1) {
-        return -1;
-    }
-    PUT(heap_listp, 0);
-    PUT(heap_listp + (1 * WSIZE), PACK_INFO(DSIZE, 1));
-    PUT(heap_listp + (2 * WSIZE), PACK_INFO(DSIZE, 1));
-    PUT(heap_listp + (3 * WSIZE), PACK_INFO(0, 1));
-    heap_listp = (char *) heap_listp + (2 * WSIZE);
-    if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
-        return -1;
-    return 0;
-}
-
-void *fast_malloc::extend_heap(std::size_t words) {
-    char *bp;
-    std::size_t size;
-    size = (words % 2) ? (words + 1) * WSIZE : words * WSIZE;
-
-    if ((long) (bp = (char *) fast_sbrk(size)) == -1) {
-        return nullptr;
-    }
-    PUT(HEADER_PTR(bp), PACK_INFO(size, 0));
-    PUT(FOOTER_PTR(bp), PACK_INFO(size, 0));
-    PUT(HEADER_PTR(NEXT_BLK_PTR(bp)), PACK_INFO(size, 1));
-
-    coalesce_block(bp);
-    return (void *) bp;
-}
-
 void fast_malloc::fast_free(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
-    std::cout<<GET_BLOCK_ALLOC(HEADER_PTR(block_ptr))<<std::endl;
-    coalesce_block(block_ptr);
+//    coalesce_block(block_ptr);
 }
 
 void *fast_malloc::fast_coalesce() {
-    for (char *i = mem_heap; i < mem_max_addr; i += 2 * WSIZE + GET_BLOCK_SIZE(i + WSIZE)) {
-        coalesce_block(i + WSIZE);
+    for (char *i = heap_listp; i < mem_brk; i += DSIZE + GET_BLOCK_SIZE(HEADER_PTR(i))) {
+        coalesce_block(i);
     }
 }
 
 void *fast_malloc::coalesce_block(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
-    bool is_prev_free = GET_BLOCK_ALLOC(PREV_BLK_PTR(block_ptr));
-    bool is_next_free = GET_BLOCK_ALLOC(NEXT_BLK_PTR(block_ptr));
+    bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
+    bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
+    std::cout << "\nPREV FREE:\t" << is_prev_free << "\nNEXT FREE:\t" << is_next_free << "\nCURR SIZE:\t" << curr_size << std::endl;
 
     if (!is_prev_free and !is_next_free) {
         logger->print_info(info_strings::NO_COALESCE_EVENT);
@@ -83,23 +89,18 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
         curr_size += GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr));
         PUT(HEADER_PTR(PREV_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
-        logger->print_info(info_strings::COALESCING_OCCURED);
     }
     if (!is_prev_free and is_next_free) {
         curr_size += GET_BLOCK_SIZE(NEXT_BLK_PTR(block_ptr));
         PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
-        logger->print_info(info_strings::COALESCING_OCCURED);
-
     }
     if (is_prev_free and is_next_free) {
         curr_size += GET_BLOCK_SIZE(NEXT_BLK_PTR(block_ptr)) + GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr));
         PUT(HEADER_PTR(PREV_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
-        logger->print_info(info_strings::COALESCING_OCCURED);
 
     }
-    std::cout << std::endl;
     return block_ptr;
 }
 
@@ -135,9 +136,9 @@ void *fast_malloc::mem_malloc(std::size_t size) {
 void *fast_malloc::fast_find_fit(std::size_t size) {
     int min_diff = INT16_MAX;
     char *curr_min_ptr = nullptr;
-    for (char *i = mem_heap; i < mem_max_addr; i += 2 * WSIZE + GET_BLOCK_SIZE(i + WSIZE)) {
-        if (GET_BLOCK_SIZE(i + WSIZE) - size < min_diff) {
-            min_diff = GET_BLOCK_SIZE(i + WSIZE) - size;
+    for (char *i = heap_listp; i < mem_brk; i += DSIZE + GET_BLOCK_SIZE(HEADER_PTR(i))) {
+        if (GET_BLOCK_SIZE(HEADER_PTR(i)) - size < min_diff) {
+            min_diff = GET_BLOCK_SIZE(HEADER_PTR(i)) - size;
             curr_min_ptr = i;
         }
     }
@@ -156,8 +157,6 @@ void *fast_malloc::fast_allocate(std::size_t size) {
 
 void fast_malloc::print_block_info(void *block_ptr) {
     std::cout << std::endl << "SIZE:\t\t" << GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) << std::endl;
-    std::cout << "PREV S:\t\t" << GET(FOOTER_PTR(block_ptr)) << std::endl;
-    std::cout << "PREV S:\t\t" << GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr)) << std::endl;
     std::cout << "PREV:\t\t" << (void *)(PREV_BLK_PTR(block_ptr)) << std::endl;
     std::cout << "HEADER:\t\t" << (void *)HEADER_PTR(block_ptr) << std::endl;
     std::cout << "BLOCK:\t\t" << (void *)block_ptr << std::endl;

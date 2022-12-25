@@ -11,7 +11,7 @@
 #include "error_strings.h"
 #include "logger.cpp"
 
-#define MAX_HEAP 1 * 512
+#define MAX_HEAP (1 * 512)
 #define WSIZE 4
 #define DSIZE 8
 #define CHUNKSIZE (1>>12)
@@ -32,8 +32,8 @@
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
 #define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
-#define NEXT_BLK_PTR(bp) ((char *)(bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
-#define PREV_BLK_PTR(bp) ((char *)(bp) - DSIZE - GET_BLOCK_SIZE((char *)(bp) - DSIZE))
+#define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
+#define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
 
 
 class fast_malloc {
@@ -42,9 +42,7 @@ private:
     char *mem_brk; // ptr to one beyond last byte of heap
     char *mem_max_addr; // max legal heap address plus 1
     Logger *logger;
-    char *heap_listp;
-
-
+    char *heap_listp; // ptr to first usable block
 
     void *fast_sbrk(int incr_amt);
 
