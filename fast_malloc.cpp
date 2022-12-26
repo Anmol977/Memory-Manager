@@ -68,6 +68,7 @@ void *fast_malloc::fast_coalesce() {
     for (char *i = mem_heap; i < mem_max_addr; i += 2 * WSIZE + GET_BLOCK_SIZE(i + WSIZE)) {
         coalesce_block(i + WSIZE);
     }
+    return nullptr;
 }
 
 void *fast_malloc::coalesce_block(void *block_ptr) {
