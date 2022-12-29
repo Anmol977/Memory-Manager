@@ -50,9 +50,8 @@ private:
     void *fast_sbrk(int incr_amt);
 
     int init_mem_list();
-public:
+
     void *fast_find_fit(std::size_t size);
-private:
 
     void *extend_heap(std::size_t words);
 
