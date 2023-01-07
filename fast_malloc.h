@@ -8,8 +8,6 @@
 #include <cstdlib>
 #include <cmath>
 #include <algorithm>
-#include <unordered_map>
-#include <list>
 #include "error_strings.h"
 #include "logger.cpp"
 
@@ -45,14 +43,12 @@ private:
     char *mem_max_addr; // max legal heap address plus 1
     Logger *logger;
     char *heap_listp; // ptr to first usable block
-    std::unordered_map<int, std::list<void*>> buddy_map; // segregated list
 
     void *fast_sbrk(int incr_amt);
 
     int init_mem_list();
-public:
+
     void *fast_find_fit(std::size_t size);
-private:
 
     void *extend_heap(std::size_t words);
 
@@ -71,8 +67,6 @@ public:
     void *mem_malloc(std::size_t size);
 
     void print_block_info(void *block_ptr);
-
-    void print_buddies();
 };
 
 
