@@ -109,6 +109,7 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         return PREV_BLK_PTR(block_ptr);
     }
+	return block_ptr;
 }
 
 void *fast_malloc::mem_malloc(std::size_t size) {
