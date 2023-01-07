@@ -5,17 +5,17 @@
 #ifndef MEMALLOCATOR_FAST_MALLOC_H
 #define MEMALLOCATOR_FAST_MALLOC_H
 
-#include <cstdlib>
+#include "logger.cpp"
+#include "error_strings.h"
+#include <list>
 #include <cmath>
+#include <cstdlib>
 #include <algorithm>
 #include <unordered_map>
-#include <list>
-#include "error_strings.h"
-#include "logger.cpp"
 
 #define MAX_HEAP (1 * 512)
-#define WSIZE 4
-#define DSIZE 8
+#define WSIZE 4 // in bytes
+#define DSIZE 8 // in bytes
 #define CHUNKSIZE (1>>12)
 
 // pack header of a memory block
@@ -43,9 +43,18 @@ private:
     char *mem_heap; // ptr to first byte of the heap
     char *mem_brk; // ptr to one beyond last byte of heap
     char *mem_max_addr; // max legal heap address plus 1
+#ifdef DEBUG
     Logger *logger;
+#endif
     char *heap_listp; // ptr to first usable block
+    std::list<void *> coalesce_batch; //queue of address for deferred coalescing
+#ifdef SEG_LIST
     std::unordered_map<int, std::list<void*>> buddy_map; // segregated list
+#endif
+
+#ifdef FIRST_FIT
+    char *rover;
+#endif
 
     void *fast_sbrk(int incr_amt);
 
@@ -55,23 +64,23 @@ private:
 
     void *extend_heap(std::size_t words);
 
-    void *fast_allocate(std::size_t size);
-
     void allocate_block(std::size_t size, void *block_ptr);
-public:
+
     void *coalesce_block(void *block_ptr);
 
-    void *fast_coalesce();
+    void print_block_info(void *block_ptr);
+
+
+    void run_rover();
+
+public:
+    void print_buddies();
 
     fast_malloc();
 
     void fast_free(void *block_ptr);
 
     void *mem_malloc(std::size_t size);
-
-    void print_block_info(void *block_ptr);
-
-    void print_buddies();
 };
 
 
