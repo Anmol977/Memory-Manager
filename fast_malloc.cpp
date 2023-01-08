@@ -45,7 +45,6 @@ void *fast_malloc::extend_heap(std::size_t words) {
     if ((long) (bp = (char *) fast_sbrk(size)) == -1) {
         return nullptr;
     }
-
     if (size > DSIZE) {
         PUT(HEADER_PTR(bp), PACK_INFO(size - DSIZE, 0));
         PUT(FOOTER_PTR(bp), PACK_INFO(size - DSIZE, 0));
@@ -74,6 +73,7 @@ void fast_malloc::fast_free(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
+#ifdef FIRST_FIT
     coalesce_batch.push_back(block_ptr);
     if (coalesce_batch.size() >= 10) {
         while (!coalesce_batch.empty()) {
@@ -81,16 +81,11 @@ void fast_malloc::fast_free(void *block_ptr) {
             coalesce_batch.pop_front();
         }
     }
+#endif
 #ifdef SEG_LIST
-    // algo can be improved by vast degree
-    std::map<int, std::list<void *>> taddr_map;
-    for (auto pair: buddy_map) {
-        while (!pair.second.empty()) {
-            void *addr = coalesce_block(pair.second.front());
-            taddr_map[GET_BLOCK_SIZE(HEADER_PTR(addr))].push_back(addr);
-        }
-    }
-    buddy_map = taddr_map;
+    // todo : optimization
+    block_ptr = coalesce_block(block_ptr);
+    buddy_map[GET_BLOCK_SIZE(HEADER_PTR(block_ptr))].push_back(block_ptr);
 #endif
     return;
 }
@@ -99,7 +94,6 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
     if (GET_BLOCK_ALLOC(HEADER_PTR(block_ptr))) {
         return nullptr;
     }
-
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) + DSIZE;
     bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
     bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
@@ -120,6 +114,7 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
         curr_size += GET_BLOCK_SIZE(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
         PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
+
         return block_ptr;
     }
     if (is_prev_free and is_next_free) {
@@ -239,3 +234,4 @@ void fast_malloc::run_rover() {
     }
 #endif
 }
+
