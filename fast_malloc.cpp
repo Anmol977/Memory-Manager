@@ -76,15 +76,23 @@ void fast_malloc::fast_free(void *block_ptr) {
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     coalesce_batch.push_back(block_ptr);
     if (coalesce_batch.size() >= 10) {
-        for (auto addr: coalesce_batch) {
-            addr = coalesce_block(addr);
-#ifdef SEG_LIST
-            buddy_map[GET_BLOCK_SIZE(HEADER_PTR(addr))].push_back(addr);
-#endif
+        while (!coalesce_batch.empty()) {
+            coalesce_block(coalesce_batch.front());
+            coalesce_batch.pop_front();
         }
-        return;
     }
-    buddy_map[curr_size].push_back(block_ptr);
+#ifdef SEG_LIST
+    // algo can be improved by vast degree
+    std::map<int, std::list<void *>> taddr_map;
+    for (auto pair: buddy_map) {
+        while (!pair.second.empty()) {
+            void *addr = coalesce_block(pair.second.front());
+            taddr_map[GET_BLOCK_SIZE(HEADER_PTR(addr))].push_back(addr);
+        }
+    }
+    buddy_map = taddr_map;
+#endif
+    return;
 }
 
 void *fast_malloc::coalesce_block(void *block_ptr) {
@@ -139,7 +147,7 @@ void *fast_malloc::mem_malloc(std::size_t size) {
         adj_size = std::ceil(((float) size / (float) DSIZE) + 1) * DSIZE;
     }
 
-    if ((block_ptr = (char *) fast_find_fit(adj_size)) != nullptr) {
+    if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
         allocate_block(adj_size, block_ptr);
         return block_ptr;
     }
@@ -166,7 +174,20 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
     }
 #endif
 #ifdef SEG_LIST
-
+    if (buddy_map.find(size) != buddy_map.end() and buddy_map[size].size() != 0) {
+        void *bp = buddy_map[size].front();
+        buddy_map[size].pop_front();
+        return bp;
+    } else {
+        auto it = buddy_map.upper_bound(size);
+        if (it == buddy_map.end()) {
+            return nullptr;
+        } else {
+            void *bp = (*it).second.front();
+            (*it).second.pop_front();
+            return bp;
+        }
+    }
 #endif
     return nullptr;
 }
@@ -202,6 +223,12 @@ void fast_malloc::print_buddies() {
         std::cout << std::endl;
     }
 #endif
+}
+
+void fast_malloc::print_heap() {
+    for (char *trover = heap_listp; GET_BLOCK_SIZE(HEADER_PTR(trover)) > 0; trover = NEXT_BLK_PTR(trover)) {
+        print_block_info(trover);
+    }
 }
 
 void fast_malloc::run_rover() {

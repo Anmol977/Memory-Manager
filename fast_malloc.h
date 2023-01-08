@@ -11,7 +11,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 
 #define MAX_HEAP (1 * 512)
 #define WSIZE 4 // in bytes
@@ -49,7 +49,7 @@ private:
     char *heap_listp; // ptr to first usable block
     std::list<void *> coalesce_batch; //queue of address for deferred coalescing
 #ifdef SEG_LIST
-    std::unordered_map<int, std::list<void*>> buddy_map; // segregated list
+    std::map<int, std::list<void*>> buddy_map; // segregated list
 #endif
 
 #ifdef FIRST_FIT
@@ -70,7 +70,6 @@ private:
 
     void print_block_info(void *block_ptr);
 
-
     void run_rover();
 
 public:
@@ -81,6 +80,8 @@ public:
     void fast_free(void *block_ptr);
 
     void *mem_malloc(std::size_t size);
+
+    void print_heap();
 };
 
 
