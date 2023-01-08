@@ -32,7 +32,7 @@ int fast_malloc::init_mem_list() {
 #ifdef FIRST_FIT
     rover = heap_listp;
 #endif
-    if ((!extend_heap(CHUNKSIZE / WSIZE))
+    if ((!extend_heap(CHUNKSIZE / WSIZE)))
         return -1;
     return 0;
 }
@@ -97,7 +97,6 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) + DSIZE;
     bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
     bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
-    std::cout << "\nPREV FREE:\t" << is_prev_free << "\nNEXT FREE:\t" << is_next_free << "\nCURR SIZE:\t" << curr_size << std::endl;
 
     if (!is_prev_free and !is_next_free) {
 #ifdef DEBUG

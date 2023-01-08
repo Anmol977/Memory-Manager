@@ -23,8 +23,6 @@ void default_malloc_benchmark() {
     free(iarr3);
 }
 
-using std::chrono::duration_cast;
-using std::chrono::duration;
 using std::chrono::milliseconds;
 
 int main() {
