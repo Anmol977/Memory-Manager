@@ -5,15 +5,18 @@
 #ifndef MEMALLOCATOR_FAST_MALLOC_H
 #define MEMALLOCATOR_FAST_MALLOC_H
 
+#ifdef DEBUG
 #include "logger.cpp"
 #include "error_strings.h"
+#endif
+#include <iostream>
 #include <list>
 #include <cmath>
 #include <cstdlib>
 #include <algorithm>
 #include <map>
 
-#define MAX_HEAP (1 * 512)
+#define MAX_HEAP (5000 * 5)
 #define WSIZE 4 // in bytes
 #define DSIZE 8 // in bytes
 #define CHUNKSIZE (1>>12)
@@ -37,6 +40,11 @@
 #define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
 
+class dummy {
+	void* dummy_func(size_t size) {
+		return malloc(size);
+	}
+};
 
 class fast_malloc {
 private:
@@ -56,7 +64,7 @@ private:
     char *rover;
 #endif
 
-    void *fast_sbrk(int incr_amt);
+    inline void *fast_sbrk(int incr_amt);
 
     int init_mem_list();
 
@@ -64,7 +72,7 @@ private:
 
     void *extend_heap(std::size_t words);
 
-    void allocate_block(std::size_t size, void *block_ptr);
+    inline void allocate_block(std::size_t size, void *block_ptr);
 
     void *coalesce_block(void *block_ptr);
 

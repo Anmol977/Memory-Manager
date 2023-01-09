@@ -3,6 +3,7 @@
 //
 
 #include "fast_malloc.h"
+#include <cstdlib>
 
 fast_malloc::fast_malloc() {
     mem_heap = (char *) malloc(MAX_HEAP);
@@ -56,7 +57,7 @@ void *fast_malloc::extend_heap(std::size_t words) {
     return (void *) bp;
 }
 
-void *fast_malloc::fast_sbrk(int incr_amt) {
+inline void *fast_malloc::fast_sbrk(int incr_amt) {
     char *prev_brk = mem_brk;
 
     if (incr_amt < 0 or (mem_brk + incr_amt) >= mem_max_addr) {
@@ -125,6 +126,8 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
 	return block_ptr;
 }
 
+#include <chrono>
+using std::chrono::milliseconds;
 void *fast_malloc::mem_malloc(std::size_t size) {
     if (size == 0) {
 #ifdef DEBUG
@@ -141,14 +144,13 @@ void *fast_malloc::mem_malloc(std::size_t size) {
         adj_size = std::ceil(((float)size / (float)DSIZE )+ 1) * DSIZE;
     }
 
-    if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
-        allocate_block(adj_size, block_ptr);
-        return block_ptr;
-    }
-
     std::size_t extend_size = std::max(adj_size, (unsigned long) CHUNKSIZE);
 
     if ((block_ptr = (char *) extend_heap(extend_size / WSIZE)) == nullptr) {
+		if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
+			allocate_block(adj_size, block_ptr);
+			return block_ptr;
+		}
 #ifdef DEBUG
         logger->print_error(error_strings::NO_HEAP_EXTEND);
 #endif
@@ -186,7 +188,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
     return nullptr;
 }
 
-void fast_malloc::allocate_block(std::size_t size, void *block_ptr){
+inline void fast_malloc::allocate_block(std::size_t size, void *block_ptr){
     PUT(HEADER_PTR(block_ptr), PACK_INFO(size - DSIZE, 1));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(size - DSIZE, 1));
 }
