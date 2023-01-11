@@ -64,7 +64,7 @@ private:
     std::map<int, std::list<void*>> buddy_map; // segregated list
 #endif
 
-#ifdef FIRST_FIT
+#if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT 
     char *rover;
 #endif
 

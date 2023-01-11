@@ -148,7 +148,6 @@ void *fast_malloc::mem_malloc(std::size_t size) {
     if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
         allocate_block(adj_size, block_ptr);
         return block_ptr;
->>>>>>> Stashed changes
     }
 #endif
     std::size_t extend_size = MAX(adj_size, (unsigned long) CHUNKSIZE);
@@ -211,7 +210,7 @@ inline void fast_malloc::allocate_block(std::size_t size, void *block_ptr){
 }
 
 void fast_malloc::print_block_info(void *block_ptr) {
-#ifdef DEBUG
+/* #ifdef DEBUG */
     if (!block_ptr) {
         return;
     }
@@ -222,7 +221,7 @@ void fast_malloc::print_block_info(void *block_ptr) {
     std::cout << "BLOCK:\t\t" << (void *) block_ptr << std::endl;
     std::cout << "FOOTER:\t\t" << (void *) FOOTER_PTR(block_ptr) << std::endl;
     std::cout << "NEXT:\t\t" << (void *) (NEXT_BLK_PTR(block_ptr)) << std::endl;
-#endif
+/* #endif */
 }
 
 void fast_malloc::print_buddies() {
