@@ -44,12 +44,6 @@
 #define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
 
-class dummy {
-	void* dummy_func(size_t size) {
-		return malloc(size);
-	}
-};
-
 class fast_malloc {
 private:
     char *mem_heap; // ptr to first byte of the heap
@@ -66,6 +60,7 @@ private:
 
 #if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT 
     char *rover;
+    std::list<void *> free_list;
 #endif
 
     inline void *fast_sbrk(int incr_amt);
@@ -77,6 +72,8 @@ private:
     void *extend_heap(std::size_t words);
 
     inline void allocate_block(std::size_t size, void *block_ptr);
+
+    inline void split_block(std::size_t size, void *block_ptr);
 
     void *coalesce_block(void *block_ptr);
 
