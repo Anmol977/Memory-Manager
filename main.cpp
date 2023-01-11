@@ -1,7 +1,6 @@
 #include "fast_malloc.h"
 #include <chrono>
-
-#define LIMIT 2 
+#define LIMIT 2
 
 void custom_malloc_benchmark(fast_malloc &mem) {
 	int *iarr1 = (int *) mem.mem_malloc(16);
@@ -37,13 +36,27 @@ void default_malloc_benchmark() {
 
     }
 }
-
 using std::chrono::milliseconds;
 
 int main() {
     fast_malloc mem = fast_malloc();
+    void *mem1 = mem.mem_malloc(8);
+    void *mem2 = mem.mem_malloc(2*8);
+    void *mem3 = mem.mem_malloc(4*8);
+    void *mem4 = mem.mem_malloc(6*8);
+    mem.print_heap();
+    std::cout<<"### \n";
+    mem.fast_free(mem1);
+    mem.fast_free(mem4);
+    mem.fast_free(mem2);
+    mem.print_heap();
+    std::cout<<"### \n";
+
+    void *mem5 = mem.mem_malloc(16);
+    mem.print_heap();
+
     auto custom_start = std::chrono::high_resolution_clock::now();
-    custom_malloc_benchmark(mem);
+//    custom_malloc_benchmark(mem);
     auto custom_end = std::chrono::high_resolution_clock::now();
     auto custom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(custom_end - custom_start);
     /* std::cout << "Custom Benchmark\t:\t" << custom_benchmark.count() << std::endl; */

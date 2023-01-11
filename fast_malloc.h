@@ -37,7 +37,7 @@
 #define GET_BLOCK_SIZE(p) (GET(p) & ~0x7)
 #define GET_BLOCK_ALLOC(p) (GET(p) & 0x1)
 
-// get pointers to header or footer from block pointer
+// get pointerqqs to header or footer from block pointer
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
 #define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
