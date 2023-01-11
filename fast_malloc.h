@@ -64,8 +64,9 @@ private:
     std::map<int, std::list<void*>> buddy_map; // segregated list
 #endif
 
-#ifdef FIRST_FIT
+#if defined FIRST_FIT || defined NEXT_FIT || defined BEST_FIT || defined WORST_FIT
     char *rover;
+    std::list<void *> free_list;
 #endif
 
     inline void *fast_sbrk(int incr_amt);
@@ -77,6 +78,8 @@ private:
     void *extend_heap(std::size_t words);
 
     inline void allocate_block(std::size_t size, void *block_ptr);
+
+    inline void split_block(std::size_t size, void *block_ptr);
 
     void *coalesce_block(void *block_ptr);
 
