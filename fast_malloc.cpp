@@ -141,16 +141,25 @@ void *fast_malloc::mem_malloc(std::size_t size) {
     if (size <= DSIZE) {
         adj_size = 2 * DSIZE;
     } else {
-        adj_size = std::ceil(((float)size / (float)DSIZE )+ 1) * DSIZE;
-    }
 
-    std::size_t extend_size = std::max(adj_size, (unsigned long) CHUNKSIZE);
+        adj_size = CEILING(((float) size / (float) DSIZE) + 1) * DSIZE;
+    }
+#ifdef SEG_LIST
+    if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
+        allocate_block(adj_size, block_ptr);
+        return block_ptr;
+>>>>>>> Stashed changes
+    }
+#endif
+    std::size_t extend_size = MAX(adj_size, (unsigned long) CHUNKSIZE);
 
     if ((block_ptr = (char *) extend_heap(extend_size / WSIZE)) == nullptr) {
-		if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
-			allocate_block(adj_size, block_ptr);
-			return block_ptr;
-		}
+#if defined FIRST_FIT || defined BEST_FIT || defined NEXT_FIT
+        if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
+            allocate_block(adj_size, block_ptr);
+            return block_ptr;
+        }
+#endif
 #ifdef DEBUG
         logger->print_error(error_strings::NO_HEAP_EXTEND);
 #endif
@@ -162,6 +171,14 @@ void *fast_malloc::mem_malloc(std::size_t size) {
 
 void *fast_malloc::fast_find_fit(std::size_t size) {
 #ifdef FIRST_FIT
+    for (char *temp_rover = rover; GET_BLOCK_SIZE(HEADER_PTR(temp_rover)) > 0; temp_rover = NEXT_BLK_PTR(temp_rover)) {
+        if (!GET_BLOCK_ALLOC(HEADER_PTR(temp_rover)) && (GET_BLOCK_SIZE(HEADER_PTR(temp_rover)) >= size)) {
+            return temp_rover;
+        }
+    }
+#endif
+#ifdef BEST_FIT
+
     char *temp_rover = rover;
     for (; GET_BLOCK_SIZE(HEADER_PTR(temp_rover)) > 0; temp_rover = NEXT_BLK_PTR(temp_rover)) {
         if(!GET_BLOCK_ALLOC(HEADER_PTR(temp_rover)) && (GET_BLOCK_SIZE(HEADER_PTR(temp_rover)) >= size) ) {

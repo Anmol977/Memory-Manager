@@ -16,10 +16,14 @@
 #include <algorithm>
 #include <map>
 
-#define MAX_HEAP (5000 * 5)
+#define MAX_HEAP (16 * 5 * 1024)
 #define WSIZE 4 // in bytes
 #define DSIZE 8 // in bytes
 #define CHUNKSIZE (1>>12)
+
+//some helper macros
+#define MAX(a, b) a > b? a : b
+#define CEILING(X) ((X-(int)(X)) > 0 ? (int)(X+1) : (int)(X))
 
 // pack header of a memory block
 #define PACK_INFO(SIZE, ISALLOC) ((SIZE) | (ISALLOC))
