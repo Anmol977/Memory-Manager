@@ -90,12 +90,6 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
     bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
     bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
 
-    if (!is_prev_free and !is_next_free) {
-#ifdef DEBUG
-        logger->print_info(info_strings::NO_COALESCE_EVENT);
-#endif
-        return block_ptr;
-    }
     if (is_prev_free and !is_next_free) {
         curr_size += GET_BLOCK_SIZE(HEADER_PTR(PREV_BLK_PTR(block_ptr))) + DSIZE;
         void *new_ptr = PREV_BLK_PTR(block_ptr);
@@ -116,6 +110,10 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         return new_ptr;
     }
+#ifdef DEBUG
+	logger->print_info(info_strings::NO_COALESCE_EVENT);
+#endif
+	return block_ptr;
 }
 
 void *fast_malloc::mem_malloc(std::size_t size) {
