@@ -37,18 +37,12 @@
 #define GET_BLOCK_SIZE(p) (GET(p) & ~0x7)
 #define GET_BLOCK_ALLOC(p) (GET(p) & 0x1)
 
-// get pointers to header or footer from block pointer
+// get pointerqqs to header or footer from block pointer
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
 #define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
 #define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
-
-class dummy {
-	void* dummy_func(size_t size) {
-		return malloc(size);
-	}
-};
 
 class fast_malloc {
 private:

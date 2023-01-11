@@ -75,18 +75,10 @@ void fast_malloc::fast_free(void *block_ptr) {
     PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
 #if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT
-//    coalesce_batch.push_back(block_ptr);
-//    if (coalesce_batch.size() >= 10) {
-//        while (!coalesce_batch.empty()) {
-//            coalesce_block(coalesce_batch.front());
-//            coalesce_batch.pop_front();
-//        }
-//    }
     block_ptr = coalesce_block(block_ptr);
     free_list.push_back(block_ptr);
 #endif
 #ifdef SEG_LIST
-    // todo : optimization
     block_ptr = coalesce_block(block_ptr);
     buddy_map[GET_BLOCK_SIZE(HEADER_PTR(block_ptr))].push_back(block_ptr);
 #endif
@@ -94,10 +86,7 @@ void fast_malloc::fast_free(void *block_ptr) {
 }
 
 void *fast_malloc::coalesce_block(void *block_ptr) {
-    if (GET_BLOCK_ALLOC(HEADER_PTR(block_ptr))) {
-        return nullptr;
-    }
-    std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) + DSIZE;
+    std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
     bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
 
@@ -108,29 +97,26 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
         return block_ptr;
     }
     if (is_prev_free and !is_next_free) {
-        curr_size += GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr));
+        curr_size += GET_BLOCK_SIZE(HEADER_PTR(PREV_BLK_PTR(block_ptr))) + DSIZE;
+        void *new_ptr = PREV_BLK_PTR(block_ptr);
         PUT(HEADER_PTR(PREV_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
+        return new_ptr;
     }
     if (!is_prev_free and is_next_free) {
-        curr_size += GET_BLOCK_SIZE(NEXT_BLK_PTR(block_ptr));
+        curr_size += GET_BLOCK_SIZE(HEADER_PTR(NEXT_BLK_PTR(block_ptr))) + DSIZE;
         PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
-
         return block_ptr;
     }
     if (is_prev_free and is_next_free) {
-        curr_size += GET_BLOCK_SIZE(NEXT_BLK_PTR(block_ptr)) + GET_BLOCK_SIZE(PREV_BLK_PTR(block_ptr));
+        curr_size += GET_BLOCK_SIZE(HEADER_PTR(NEXT_BLK_PTR(block_ptr))) + GET_BLOCK_SIZE(HEADER_PTR(PREV_BLK_PTR(block_ptr))) + DSIZE + DSIZE;
+        void *new_ptr = PREV_BLK_PTR(block_ptr);
         PUT(HEADER_PTR(PREV_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
         PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(curr_size, 0));
-
+        return new_ptr;
     }
-    return block_ptr;
 }
-
-#include <chrono>
-
-using std::chrono::milliseconds;
 
 void *fast_malloc::mem_malloc(std::size_t size) {
     if (size == 0) {
@@ -150,7 +136,7 @@ void *fast_malloc::mem_malloc(std::size_t size) {
     }
 
     if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
-#ifdef WORST_FIT
+#if defined WORST_FIT || defined BEST_FIT
         if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size >= 16)
             split_block(size, block_ptr);
 #endif
@@ -193,12 +179,12 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
     return best_fit_ptr;
 #endif
 #ifdef WORST_FIT
-    uint16_t max_size = INT16_MIN;
+    uint16_t max_diff = 0;
     void *best_fit_ptr = nullptr;
     for (void *block_ptr: free_list) {
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
-            if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size < max_size) {
-                max_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size;
+            if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size > max_diff) {
+                max_diff = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size;
                 best_fit_ptr = block_ptr;
             }
         }
@@ -225,20 +211,21 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
 }
 
 inline void fast_malloc::allocate_block(std::size_t size, void *block_ptr) {
-    PUT(HEADER_PTR(block_ptr), PACK_INFO(size - DSIZE, 1));
-    PUT(FOOTER_PTR(block_ptr), PACK_INFO(size - DSIZE, 1));
+
+    PUT(HEADER_PTR(block_ptr), PACK_INFO(MAX(size - DSIZE, GET_BLOCK_SIZE(HEADER_PTR(block_ptr))), 1));
+    PUT(FOOTER_PTR(block_ptr), PACK_INFO(MAX(size - DSIZE, GET_BLOCK_SIZE(HEADER_PTR(block_ptr))), 1));
 }
 
 inline void fast_malloc::split_block(std::size_t size, void *block_ptr) {
     size_t org_block_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(size, 0));
-    PUT((char *) block_ptr + size, PACK_INFO(size, 0));
-    PUT((char *) block_ptr + size + WSIZE, PACK_INFO(org_block_size - size, 0));
-    PUT(FOOTER_PTR(block_ptr), PACK_INFO(org_block_size - size, 0));
+    PUT(FOOTER_PTR(block_ptr), PACK_INFO(size, 0));
+    PUT(HEADER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(org_block_size - size - DSIZE, 0));
+    PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(org_block_size - size - DSIZE, 0));
 }
 
 void fast_malloc::print_block_info(void *block_ptr) {
-#ifdef DEBUG
+//#ifdef DEBUG
     if (!block_ptr) {
         return;
     }
@@ -249,7 +236,7 @@ void fast_malloc::print_block_info(void *block_ptr) {
     std::cout << "BLOCK:\t\t" << (void *) block_ptr << std::endl;
     std::cout << "FOOTER:\t\t" << (void *) FOOTER_PTR(block_ptr) << std::endl;
     std::cout << "NEXT:\t\t" << (void *) (NEXT_BLK_PTR(block_ptr)) << std::endl;
-#endif
+//#endif
 }
 
 void fast_malloc::print_buddies() {
