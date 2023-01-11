@@ -226,6 +226,7 @@ inline void fast_malloc::split_block(std::size_t size, void *block_ptr) {
 
 void fast_malloc::print_block_info(void *block_ptr) {
 //#ifdef DEBUG
+
     if (!block_ptr) {
         return;
     }
