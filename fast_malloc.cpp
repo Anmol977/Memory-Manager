@@ -158,6 +158,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
 #ifdef FIRST_FIT
     for (void *block_ptr : free_list){
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
+			free_list.remove(block_ptr);
             return block_ptr;
         }
     }
@@ -174,6 +175,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
             }
         }
     }
+	free_list.remove(best_fit_ptr);
     return best_fit_ptr;
 #endif
 #ifdef WORST_FIT
@@ -187,6 +189,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
             }
         }
     }
+	free_list.remove(best_fit_ptr);
     return best_fit_ptr;
 #endif
 #ifdef SEG_LIST
