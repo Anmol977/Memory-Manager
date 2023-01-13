@@ -80,7 +80,7 @@ void fast_malloc::fast_free(void *block_ptr) {
 #endif
 #ifdef SEG_LIST
     block_ptr = coalesce_block(block_ptr);
-    buddy_map[GET_BLOCK_SIZE(HEADER_PTR(block_ptr))].push_back(block_ptr);
+    buddy_map[GET_BLOCK_SIZE(HEADER_PTR(block_ptr))].push(block_ptr);
 #endif
     return;
 }
@@ -194,16 +194,14 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
 #endif
 #ifdef SEG_LIST
     if (buddy_map.find(size) != buddy_map.end() and buddy_map[size].size() != 0) {
-        void *bp = buddy_map[size].front();
-        buddy_map[size].pop_front();
+        void *bp = buddy_map[size].pop();
         return bp;
     } else {
         auto it = buddy_map.upper_bound(size);
         if (it == buddy_map.end()) {
             return nullptr;
         } else {
-            void *bp = (*it).second.front();
-            (*it).second.pop_front();
+            void *bp = (*it).second.pop();
             return bp;
         }
     }
@@ -243,14 +241,14 @@ void fast_malloc::print_block_info(void *block_ptr) {
 
 void fast_malloc::print_buddies() {
 #ifdef SEG_LIST
-    std::cout << std::endl;
-    for (auto buddy: buddy_map) {
-        std::cout << buddy.first << " : ";
-        for (auto mem: buddy.second) {
-            std::cout << mem << " -> ";
-        }
-        std::cout << std::endl;
-    }
+//    std::cout << std::endl;
+//    for (auto buddy: buddy_map) {
+//        std::cout << buddy.first << " : ";
+//        for (auto mem: buddy.second) {
+//            std::cout << mem << " -> ";
+//        }
+//        std::cout << std::endl;
+//    }
 #endif
 }
 

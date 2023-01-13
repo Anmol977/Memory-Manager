@@ -35,7 +35,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -g -D BEST_FIT  -g -fdiagnostics-color=always"
+					"fragment" : " -g -D SEG_LIST  -g -fdiagnostics-color=always"
 				}
 			],
 			"language" : "CXX",
@@ -61,7 +61,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-g -D BEST_FIT  -g",
+				"fragment" : "-g -D SEG_LIST  -g",
 				"role" : "flags"
 			},
 			{
@@ -94,7 +94,8 @@
 			"sourceIndexes" : 
 			[
 				1,
-				4
+				4,
+				5
 			]
 		}
 	],
@@ -126,6 +127,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "fast_malloc.h",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "list.h",
 			"sourceGroupIndex" : 1
 		}
 	],

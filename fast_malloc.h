@@ -9,6 +9,7 @@
 #include "logger.cpp"
 #include "error_strings.h"
 #endif
+#include "list.h"
 #include <iostream>
 #include <list>
 #include <cmath>
@@ -53,9 +54,9 @@ private:
     Logger *logger;
 #endif
     char *heap_listp; // ptr to first usable block
-    std::list<void *> coalesce_batch; //queue of address for deferred coalescing
+    List coalesce_batch; //queue of address for deferred coalescing
 #ifdef SEG_LIST
-    std::map<int, std::list<void*>> buddy_map; // segregated list
+    std::map<int, List> buddy_map; // segregated list
 #endif
 
 #if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT 
