@@ -1,7 +1,7 @@
 #include "fast_malloc.h"
 #include <chrono>
 
-#define LIMIT 2000
+#define LIMIT 8000
 
 void agrims_omnicase_scenario(fast_malloc &mem) {
     int *iarr1 = (int *) mem.mem_malloc(16);

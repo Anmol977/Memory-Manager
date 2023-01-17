@@ -21,7 +21,7 @@
 #define MAX_HEAP (10 * 1024)
 #define WSIZE 4 // in bytes
 #define DSIZE 8 // in bytes
-#define CHUNKSIZE (1>>12)
+#define CHUNKSIZE (1<<12)
 
 //some helper macros
 #define MAX(a, b) a > b? a : b
