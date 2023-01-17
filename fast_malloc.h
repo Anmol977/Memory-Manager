@@ -50,22 +50,22 @@
 
 class fast_malloc {
 private:
-    char *mem_heap; // ptr to first byte of the heap
-    char *mem_brk; // ptr to one beyond last byte of heap
-    char *mem_unalloc_addr;
-    char *mem_max_addr; // max legal heap address plus 1
+    char *m_memHeap; // ptr to first byte of the heap
+    char *m_memBrk; // ptr to one beyond last byte of heap
+    char *m_memUnallocAddr;
+    char *m_memMaxAddr; // max legal heap address plus 1
 #ifdef DEBUG
     Logger *logger;
 #endif
-    char *heap_listp; // ptr to first usable block
-    List coalesce_batch; //queue of address for deferred coalescing
+    char *m_heapListp; // ptr to first usable block
+    List m_coalesceBatch; //queue of address for deferred coalescing
 #ifdef SEG_LIST
     std::map<int, List> buddy_map; // segregated list
 #endif
 
 #if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT 
     char *rover;
-    std::list<void *> free_list;
+    std::list<void *> m_freeList;
 #endif
 
     inline void *fast_sbrk(int );

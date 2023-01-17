@@ -1,7 +1,7 @@
 #include "fast_malloc.h"
 #include <chrono>
 
-#define LIMIT 8000
+#define LIMIT 2000
 
 void agrims_omnicase_scenario(fast_malloc &mem) {
     int *iarr1 = (int *) mem.mem_malloc(16);
@@ -51,8 +51,6 @@ int main() {
     auto custom_end = std::chrono::high_resolution_clock::now();
     auto custom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(custom_end - custom_start);
     std::cout << "Custom Benchmark\t:\t" << custom_benchmark.count() << std::endl;
-
-//    mem.print_buddies();
 
     auto default_start = std::chrono::high_resolution_clock::now();
     default_malloc_benchmark();

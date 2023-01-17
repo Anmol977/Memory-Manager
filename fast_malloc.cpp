@@ -6,8 +6,8 @@
 #include <cstdlib>
 
 fast_malloc::fast_malloc() {
-    mem_heap = mem_brk = heap_listp = mem_unalloc_addr = (char *) malloc(MAX_HEAP);
-    mem_max_addr = (char *) mem_heap + MAX_HEAP;
+    m_memHeap = m_memBrk = m_heapListp = m_memUnallocAddr = (char *) malloc(MAX_HEAP);
+    m_memMaxAddr = (char *) m_memHeap + MAX_HEAP;
 #ifdef DEBUG
     logger = new Logger();
 #endif
@@ -21,51 +21,31 @@ fast_malloc::fast_malloc() {
 
 int fast_malloc::init_mem_list() {
     // 16 = 4 * WSIZE in the below line
-    if ((heap_listp = (char *) fast_sbrk(16)) == (void *) -1) {
+    if ((m_heapListp = (char *) extend_heap(16)) == (void *) -1) {
         return -1;
     }
-    PUT(heap_listp, 0);
-    PUT(heap_listp + (1 * WSIZE), PACK_INFO(0, 1));
-    PUT(heap_listp + (2 * WSIZE), PACK_INFO(0, 1));
-    PUT(heap_listp + (3 * WSIZE), PACK_INFO(0, 1));
-    heap_listp += (4 * WSIZE); // added another WSIZE because else heaplistp would be pointing to header of first block
-    mem_unalloc_addr = heap_listp;
+    PUT(m_heapListp, 0);
+    PUT(m_heapListp + (1 * WSIZE), PACK_INFO(0, 1));
+    PUT(m_heapListp + (2 * WSIZE), PACK_INFO(0, 1));
+    PUT(m_heapListp + (3 * WSIZE), PACK_INFO(0, 1));
+    m_heapListp += (16); // added another WSIZE because else heaplistp would be pointing to header of first block
+    m_memUnallocAddr = m_heapListp;
 #ifdef FIRST_FIT
-    rover = heap_listp;
+    rover = m_heapListp;
 #endif
     if ((!extend_heap(CHUNKSIZE / WSIZE)))
         return -1;
     return 0;
 }
 
-inline void *fast_malloc::fast_sbrk(int incr_amt) {
-
-    char *prev_brk = mem_brk;
-    if ((mem_brk + incr_amt) >= mem_max_addr) {
-#ifdef DEBUG
-        logger->print_error(error_strings::INSUFFICIENT_MEMORY);
-#endif
-        return (void *) -1;
-    }
-    mem_brk += incr_amt;
-    return (void *) prev_brk;
-}
-
 void *fast_malloc::extend_heap(std::size_t t_size) {
-    char *bp;
     std::size_t size = (t_size & 0x1) ? (t_size + 1) << 2 : t_size << 2;
-    if ((long) (bp = (char *) fast_sbrk(size)) == -1) {
+    char *prevBrk = m_memBrk;
+    if((m_memBrk + size >= m_memMaxAddr)){
         return nullptr;
     }
-    if (size > DSIZE) {
-        PUT(HEADER_PTR(bp), PACK_INFO(size - DSIZE, 0));
-        PUT(FOOTER_PTR(bp), PACK_INFO(size - DSIZE, 0));
-    } else {
-        PUT(HEADER_PTR(bp), PACK_INFO(size, 0));
-        PUT(FOOTER_PTR(bp), PACK_INFO(size, 0));
-    }
-    PUT(HEADER_PTR(NEXT_BLK_PTR(bp)), PACK_INFO(0, 1));
-    return (void *) bp;
+    m_memBrk +=size;
+    return (void *) prevBrk;
 }
 
 void *fast_malloc::mem_malloc(std::size_t size) {
@@ -84,9 +64,10 @@ void *fast_malloc::mem_malloc(std::size_t size) {
         adj_size = CEILING(((float) size / (float) DSIZE) + 1) * DSIZE;
     }
 
-    if ((mem_unalloc_addr + adj_size) < mem_brk) {
-        block_ptr = mem_unalloc_addr;
-        mem_unalloc_addr += adj_size;
+    if ((m_memUnallocAddr + adj_size) < m_memBrk) {
+        block_ptr = m_memUnallocAddr;
+        m_memUnallocAddr += adj_size;
+        allocate_block(adj_size, block_ptr);
         return block_ptr;
     }
 
@@ -112,9 +93,9 @@ void *fast_malloc::mem_malloc(std::size_t size) {
 
 void *fast_malloc::fast_find_fit(std::size_t size) {
 #ifdef FIRST_FIT
-    for (void *block_ptr: free_list) {
+    for (void *block_ptr: m_freeList) {
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
-            free_list.remove(block_ptr);
+            m_freeList.remove(block_ptr);
             return block_ptr;
         }
     }
@@ -122,7 +103,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
 #ifdef BEST_FIT
     uint16_t min_size = INT16_MAX;
     void *best_fit_ptr = nullptr;
-    for (void *block_ptr: free_list) {
+    for (void *block_ptr: m_freeList) {
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
             if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size < min_size) {
                 min_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size;
@@ -131,13 +112,13 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
             }
         }
     }
-    free_list.remove(best_fit_ptr);
+    m_freeList.remove(best_fit_ptr);
     return best_fit_ptr;
 #endif
 #ifdef WORST_FIT
     uint16_t max_diff = 0;
     void *best_fit_ptr = nullptr;
-    for (void *block_ptr: free_list) {
+    for (void *block_ptr: m_freeList) {
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
             if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size > max_diff) {
                 max_diff = GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size;
@@ -145,7 +126,7 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
             }
         }
     }
-    free_list.remove(best_fit_ptr);
+    m_freeList.remove(best_fit_ptr);
     return best_fit_ptr;
 #endif
 #ifdef SEG_LIST
@@ -182,7 +163,7 @@ void fast_malloc::fast_free(void *block_ptr) {
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
 #if defined FIRST_FIT || defined BEST_FIT || defined WORST_FIT || defined NEXT_FIT
     block_ptr = coalesce_block(block_ptr);
-    free_list.push_back(block_ptr);
+    m_freeList.push_back(block_ptr);
 #endif
 #ifdef SEG_LIST
     block_ptr = coalesce_block(block_ptr);
@@ -253,7 +234,7 @@ void fast_malloc::print_buddies() {
 }
 
 void fast_malloc::print_heap() {
-    for (char *trover = heap_listp; GET_BLOCK_SIZE(HEADER_PTR(trover)) > 0; trover = NEXT_BLK_PTR(trover)) {
+    for (char *trover = m_heapListp; GET_BLOCK_SIZE(HEADER_PTR(trover)) > 0; trover = NEXT_BLK_PTR(trover)) {
         print_block_info(trover);
     }
 }
