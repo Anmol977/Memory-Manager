@@ -9,6 +9,7 @@
 #include "logger.cpp"
 #include "error_strings.h"
 #endif
+
 #include "list.h"
 #include <iostream>
 #include <list>
@@ -17,7 +18,7 @@
 #include <algorithm>
 #include <map>
 
-#define MAX_HEAP (16 * 5 * 1024)
+#define MAX_HEAP (10 * 1024)
 #define WSIZE 4 // in bytes
 #define DSIZE 8 // in bytes
 #define CHUNKSIZE (1>>12)
@@ -42,6 +43,8 @@
 #define HEADER_PTR(bp) ((char *)(bp) - WSIZE)
 #define FOOTER_PTR(bp) ((char *)(bp) + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 
+#define NEXT_BLOCK_HEADER(bp) ((char *)FOOTER_PTR(bp) + WSIZE)
+
 #define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
 
@@ -49,6 +52,7 @@ class fast_malloc {
 private:
     char *mem_heap; // ptr to first byte of the heap
     char *mem_brk; // ptr to one beyond last byte of heap
+    char *mem_unalloc_addr;
     char *mem_max_addr; // max legal heap address plus 1
 #ifdef DEBUG
     Logger *logger;
@@ -64,32 +68,34 @@ private:
     std::list<void *> free_list;
 #endif
 
-    inline void *fast_sbrk(int incr_amt);
+    inline void *fast_sbrk(int );
 
     int init_mem_list();
 
-    void *fast_find_fit(std::size_t size);
+    void *fast_find_fit(std::size_t );
 
-    void *extend_heap(std::size_t words);
+    void *extend_heap(std::size_t );
 
-    inline void allocate_block(std::size_t size, void *block_ptr);
+    inline void allocate_block(std::size_t , void *);
 
-    inline void split_block(std::size_t size, void *block_ptr);
+    inline void split_block(std::size_t , void *);
 
-    void *coalesce_block(void *block_ptr);
+    void *coalesce_block(void *);
 
-    void print_block_info(void *block_ptr);
+    void print_block_info(void *);
 
     void run_rover();
+
+    void* alloc_on_heap(size_t);
 
 public:
     void print_buddies();
 
     fast_malloc();
 
-    void fast_free(void *block_ptr);
+    void fast_free(void *);
 
-    void *mem_malloc(std::size_t size);
+    void *mem_malloc(std::size_t );
 
     void print_heap();
 };

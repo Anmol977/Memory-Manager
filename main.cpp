@@ -12,8 +12,7 @@ void agrims_omnicase_scenario(fast_malloc &mem) {
     int *iarr6 = (int *) mem.mem_malloc(32);
     int *iarr7 = (int *) mem.mem_malloc(16);
 
-    /* mem.print_heap(); */
-
+    mem.print_heap();
     mem.fast_free(iarr2); // first fit
     mem.fast_free(iarr4); // best fit
     mem.fast_free(iarr6); // worst fit
@@ -25,26 +24,20 @@ void agrims_omnicase_scenario(fast_malloc &mem) {
 
     std::cout << "After Allocating\n";
     mem.print_heap();
-    /* int *iarr[LIMIT]; */
-    /* for (int i = 0; i < LIMIT; i++) { */
-    /*     iarr[i] = (int *) mem.mem_malloc(sizeof(int)); */
-    /* } */
+    mem.fast_free(iarr8);
 }
 
 void custom_malloc_benchmark(fast_malloc &mem) {
-    void *iarr[LIMIT];
+    int *iarr[LIMIT];
     for (int i = 0; i < LIMIT; i++) {
-        iarr[i] = mem.mem_malloc(8);
-
+        iarr[i] = (int *) mem.mem_malloc(8);
     }
 }
 
-
 void default_malloc_benchmark() {
-    void *iarr[LIMIT];
+    int *iarr[LIMIT];
     for (int i = 0; i < LIMIT; i++) {
-        iarr[i] = malloc(8);
-
+        iarr[i] = (int *) malloc(8);
     }
 }
 
@@ -52,21 +45,7 @@ using std::chrono::milliseconds;
 
 int main() {
     fast_malloc mem = fast_malloc();
-    /* void *mem1 = mem.mem_malloc(8); */
-    /* void *mem2 = mem.mem_malloc(2*8); */
-    /* void *mem3 = mem.mem_malloc(4*8); */
-    /* void *mem4 = mem.mem_malloc(6*8); */
-    /* mem.print_heap(); */
-    /* std::cout<<"### \n"; */
-    /* mem.fast_free(mem1); */
-    /* mem.fast_free(mem4); */
-    /* mem.fast_free(mem2); */
-    /* mem.print_heap(); */
-    /* std::cout<<"### \n"; */
-
-    /* void *mem5 = mem.mem_malloc(16); */
-    /* mem.print_heap(); */
-
+//    agrims_omnicase_scenario(mem);
     auto custom_start = std::chrono::high_resolution_clock::now();
     custom_malloc_benchmark(mem);
     auto custom_end = std::chrono::high_resolution_clock::now();

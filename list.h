@@ -24,16 +24,12 @@ class List {
 public:
 
     void push(void *addr) {
-        if (m_size == 0) {
-            m_head = new node(addr, nullptr);
-            m_size++;
-        } else {
-            node *new_node = new node(addr, (m_head)->next);
-            m_head = new_node;
-            m_size++;
-        }
+        node *new_node = new node(addr, m_head);
+        m_head = new_node;
+        m_size++;
     }
 
+    //pop always from front for constant complexity
     void *pop() {
         void *popped_addr = (m_head)->addr;
         m_head = (m_head)->next;
