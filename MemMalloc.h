@@ -2,8 +2,8 @@
 // Created by anmol on 3/12/22.
 //
 
-#ifndef MEMALLOCATOR_FAST_MALLOC_H
-#define MEMALLOCATOR_FAST_MALLOC_H
+#ifndef MEMALLOCATOR_MEMMALLOC_H
+#define MEMALLOCATOR_MEMMALLOC_H
 
 #ifdef DEBUG
 #include "logger.cpp"
@@ -48,7 +48,7 @@
 #define NEXT_BLK_PTR(bp) (((char *)bp) + DSIZE + GET_BLOCK_SIZE(HEADER_PTR(bp)))
 #define PREV_BLK_PTR(bp) (((char *)bp) - DSIZE - GET_BLOCK_SIZE(((char *)bp) - DSIZE))
 
-class fast_malloc {
+class MemMalloc {
 private:
     char *m_memHeap; // ptr to first byte of the heap
     char *m_memBrk; // ptr to one beyond last byte of heap
@@ -67,12 +67,9 @@ private:
     char *rover;
     std::list<void *> m_freeList;
 #endif
-
-    inline void *fast_sbrk(int );
-
     int init_mem_list();
 
-    void *fast_find_fit(std::size_t );
+    void *mem_find_fit(std::size_t );
 
     void *extend_heap(std::size_t );
 
@@ -86,14 +83,12 @@ private:
 
     void run_rover();
 
-    void* alloc_on_heap(size_t);
-
 public:
     void print_buddies();
 
-    fast_malloc();
+    MemMalloc();
 
-    void fast_free(void *);
+    void mem_free(void *);
 
     void *mem_malloc(std::size_t );
 
@@ -101,4 +96,4 @@ public:
 };
 
 
-#endif //MEMALLOCATOR_FAST_MALLOC_H
+#endif //MEMALLOCATOR_MEMMALLOC_H

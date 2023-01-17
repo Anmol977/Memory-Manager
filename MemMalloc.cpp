@@ -2,10 +2,10 @@
 // Created by anmol and shivam and agrim on 3/12/22.
 //
 
-#include "fast_malloc.h"
+#include "MemMalloc.h"
 #include <cstdlib>
 
-fast_malloc::fast_malloc() {
+MemMalloc::MemMalloc() {
     m_memHeap = m_memBrk = m_heapListp = m_memUnallocAddr = (char *) malloc(MAX_HEAP);
     m_memMaxAddr = (char *) m_memHeap + MAX_HEAP;
 #ifdef DEBUG
@@ -19,7 +19,7 @@ fast_malloc::fast_malloc() {
     }
 }
 
-int fast_malloc::init_mem_list() {
+int MemMalloc::init_mem_list() {
     // 16 = 4 * WSIZE in the below line
     if ((m_heapListp = (char *) extend_heap(16)) == (void *) -1) {
         return -1;
@@ -38,7 +38,7 @@ int fast_malloc::init_mem_list() {
     return 0;
 }
 
-void *fast_malloc::extend_heap(std::size_t t_size) {
+void *MemMalloc::extend_heap(std::size_t t_size) {
     std::size_t size = (t_size & 0x1) ? (t_size + 1) << 2 : t_size << 2;
     char *prevBrk = m_memBrk;
     if((m_memBrk + size >= m_memMaxAddr)){
@@ -48,7 +48,7 @@ void *fast_malloc::extend_heap(std::size_t t_size) {
     return (void *) prevBrk;
 }
 
-void *fast_malloc::mem_malloc(std::size_t size) {
+void *MemMalloc::mem_malloc(std::size_t size) {
     if (size == 0) {
 #ifdef DEBUG
         logger->print_error(error_strings::INVALID_ALLOCATION_PARAMETER);
@@ -71,7 +71,7 @@ void *fast_malloc::mem_malloc(std::size_t size) {
         return block_ptr;
     }
 
-    if ((block_ptr = (char *) fast_find_fit(size)) != nullptr) {
+    if ((block_ptr = (char *) mem_find_fit(size)) != nullptr) {
 #if defined WORST_FIT || defined BEST_FIT
         if (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) - size >= 16)
             split_block(size, block_ptr);
@@ -91,7 +91,7 @@ void *fast_malloc::mem_malloc(std::size_t size) {
     return block_ptr;
 }
 
-void *fast_malloc::fast_find_fit(std::size_t size) {
+void *MemMalloc::mem_find_fit(std::size_t size) {
 #ifdef FIRST_FIT
     for (void *block_ptr: m_freeList) {
         if (!GET_BLOCK_ALLOC(HEADER_PTR(block_ptr)) && (GET_BLOCK_SIZE(HEADER_PTR(block_ptr)) >= size)) {
@@ -144,12 +144,12 @@ void *fast_malloc::fast_find_fit(std::size_t size) {
     return nullptr;
 }
 
-inline void fast_malloc::allocate_block(std::size_t size, void *block_ptr) {
+inline void MemMalloc::allocate_block(std::size_t size, void *block_ptr) {
     PUT(HEADER_PTR(block_ptr), PACK_INFO(MAX(size - DSIZE, GET_BLOCK_SIZE(HEADER_PTR(block_ptr))), 1));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(MAX(size - DSIZE, GET_BLOCK_SIZE(HEADER_PTR(block_ptr))), 1));
 }
 
-inline void fast_malloc::split_block(std::size_t size, void *block_ptr) {
+inline void MemMalloc::split_block(std::size_t size, void *block_ptr) {
     size_t org_block_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(size, 0));
@@ -157,7 +157,7 @@ inline void fast_malloc::split_block(std::size_t size, void *block_ptr) {
     PUT(FOOTER_PTR(NEXT_BLK_PTR(block_ptr)), PACK_INFO(org_block_size - size - DSIZE, 0));
 }
 
-void fast_malloc::fast_free(void *block_ptr) {
+void MemMalloc::mem_free(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     PUT(HEADER_PTR(block_ptr), PACK_INFO(curr_size, 0));
     PUT(FOOTER_PTR(block_ptr), PACK_INFO(curr_size, 0));
@@ -172,7 +172,7 @@ void fast_malloc::fast_free(void *block_ptr) {
     return;
 }
 
-void *fast_malloc::coalesce_block(void *block_ptr) {
+void *MemMalloc::coalesce_block(void *block_ptr) {
     std::size_t curr_size = GET_BLOCK_SIZE(HEADER_PTR(block_ptr));
     bool is_prev_free = !GET_BLOCK_ALLOC(HEADER_PTR(PREV_BLK_PTR(block_ptr)));
     bool is_next_free = !GET_BLOCK_ALLOC(HEADER_PTR(NEXT_BLK_PTR(block_ptr)));
@@ -204,7 +204,7 @@ void *fast_malloc::coalesce_block(void *block_ptr) {
     return block_ptr;
 }
 
-void fast_malloc::print_block_info(void *block_ptr) {
+void MemMalloc::print_block_info(void *block_ptr) {
 //#ifdef DEBUG
 
     if (!block_ptr) {
@@ -220,7 +220,7 @@ void fast_malloc::print_block_info(void *block_ptr) {
 //#endif
 }
 
-void fast_malloc::print_buddies() {
+void MemMalloc::print_buddies() {
 #ifdef SEG_LIST
     //    std::cout << std::endl;
     //    for (auto buddy: buddy_map) {
@@ -233,13 +233,13 @@ void fast_malloc::print_buddies() {
 #endif
 }
 
-void fast_malloc::print_heap() {
+void MemMalloc::print_heap() {
     for (char *trover = m_heapListp; GET_BLOCK_SIZE(HEADER_PTR(trover)) > 0; trover = NEXT_BLK_PTR(trover)) {
         print_block_info(trover);
     }
 }
 
-void fast_malloc::run_rover() {
+void MemMalloc::run_rover() {
 #ifdef FIRST_FIT
     char *temp_rover = rover;
     for (; GET_BLOCK_SIZE(HEADER_PTR(temp_rover)) > 0; temp_rover = NEXT_BLK_PTR(temp_rover)) {
