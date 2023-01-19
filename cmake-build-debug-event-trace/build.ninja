@@ -61,8 +61,8 @@ build CMakeFiles/memAllocator.dir/logger.cpp.o: CXX_COMPILER__memAllocator_Debug
   OBJECT_DIR = CMakeFiles/memAllocator.dir
   OBJECT_FILE_DIR = CMakeFiles/memAllocator.dir
 
-build CMakeFiles/memAllocator.dir/fast_malloc.cpp.o: CXX_COMPILER__memAllocator_Debug /home/anmol/CLionProjects/memAllocator/fast_malloc.cpp || cmake_object_order_depends_target_memAllocator
-  DEP_FILE = CMakeFiles/memAllocator.dir/fast_malloc.cpp.o.d
+build CMakeFiles/memAllocator.dir/MemMalloc.cpp.o: CXX_COMPILER__memAllocator_Debug /home/anmol/CLionProjects/memAllocator/MemMalloc.cpp || cmake_object_order_depends_target_memAllocator
+  DEP_FILE = CMakeFiles/memAllocator.dir/MemMalloc.cpp.o.d
   FLAGS = -g -D FIRST_FIT  -g -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles/memAllocator.dir
   OBJECT_FILE_DIR = CMakeFiles/memAllocator.dir
@@ -75,7 +75,7 @@ build CMakeFiles/memAllocator.dir/fast_malloc.cpp.o: CXX_COMPILER__memAllocator_
 #############################################
 # Link the executable memAllocator
 
-build memAllocator: CXX_EXECUTABLE_LINKER__memAllocator_Debug CMakeFiles/memAllocator.dir/main.cpp.o CMakeFiles/memAllocator.dir/logger.cpp.o CMakeFiles/memAllocator.dir/fast_malloc.cpp.o
+build memAllocator: CXX_EXECUTABLE_LINKER__memAllocator_Debug CMakeFiles/memAllocator.dir/main.cpp.o CMakeFiles/memAllocator.dir/logger.cpp.o CMakeFiles/memAllocator.dir/MemMalloc.cpp.o
   FLAGS = -g -D FIRST_FIT  -g
   OBJECT_DIR = CMakeFiles/memAllocator.dir
   POST_BUILD = :

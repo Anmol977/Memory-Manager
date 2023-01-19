@@ -22,7 +22,6 @@ class List {
     Node *m_head = nullptr;
     uint32_t m_size = 0;
 public:
-
     void push(void *addr) {
         Node *new_node = new Node(addr, m_head);
         m_head = new_node;
@@ -31,6 +30,9 @@ public:
 
     //pop always from front for constant complexity
     void *pop() {
+        if(m_size == 0){
+            return nullptr;
+        }
         void *popped_addr = (m_head)->m_addr;
         m_head = (m_head)->m_next;
         m_size--;

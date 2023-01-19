@@ -1,7 +1,7 @@
 #include "MemMalloc.h"
 #include <chrono>
 
-#define LIMIT 2000
+#define LIMIT 20000
 
 void agrims_omnicase_scenario(MemMalloc &mem) {
     int *iarr1 = (int *) mem.mem_malloc(16);
@@ -45,16 +45,16 @@ using std::chrono::milliseconds;
 
 int main() {
     MemMalloc mem = MemMalloc();
-    agrims_omnicase_scenario(mem);
-//    auto custom_start = std::chrono::high_resolution_clock::now();
-//    custom_malloc_benchmark(mem);
-//    auto custom_end = std::chrono::high_resolution_clock::now();
-//    auto custom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(custom_end - custom_start);
-//    std::cout << "Custom Benchmark\t:\t" << custom_benchmark.count() << std::endl;
-//
-//    auto default_start = std::chrono::high_resolution_clock::now();
-//    default_malloc_benchmark();
-//    auto dcustom_end = std::chrono::high_resolution_clock::now();
-//    auto dcustom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(dcustom_end - default_start);
-//    std::cout << "Default Benchmark\t:\t" << dcustom_benchmark.count() << std::endl;
+//    agrims_omnicase_scenario(mem);
+    auto custom_start = std::chrono::high_resolution_clock::now();
+    custom_malloc_benchmark(mem);
+    auto custom_end = std::chrono::high_resolution_clock::now();
+    auto custom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(custom_end - custom_start);
+    std::cout << "Custom Benchmark\t:\t" << custom_benchmark.count() << std::endl;
+
+    auto default_start = std::chrono::high_resolution_clock::now();
+    default_malloc_benchmark();
+    auto dcustom_end = std::chrono::high_resolution_clock::now();
+    auto dcustom_benchmark = std::chrono::duration_cast<std::chrono::nanoseconds>(dcustom_end - default_start);
+    std::cout << "Default Benchmark\t:\t" << dcustom_benchmark.count() << std::endl;
 }

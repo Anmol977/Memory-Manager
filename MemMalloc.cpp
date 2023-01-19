@@ -130,16 +130,12 @@ void *MemMalloc::mem_find_fit(std::size_t size) {
     return best_fit_ptr;
 #endif
 #ifdef SEG_LIST
-    if (buddy_map.find(size) != buddy_map.end() and buddy_map[size].size() != 0) {
-        return buddy_map[size].pop();
-    } else {
-        auto it = buddy_map.upper_bound(size);
+        auto it = buddy_map.lower_bound(size);
         if (it == buddy_map.end()) {
             return nullptr;
         } else {
             return (*it).second.pop();
         }
-    }
 #endif
     return nullptr;
 }
